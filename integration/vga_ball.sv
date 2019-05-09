@@ -15,7 +15,13 @@ module vga_ball(input logic        clk,
 		output logic [7:0] VGA_R, VGA_G, VGA_B,
 		output logic 	   VGA_CLK, VGA_HS, VGA_VS,
 		                   VGA_BLANK_n,
-		output logic 	   VGA_SYNC_n);
+		output logic 	   VGA_SYNC_n,
+		input   logic [8:0] sample,
+		input  logic [1:0] valid,
+		output logic [1:0] full,
+		output logic [11:0] trig,
+		output logic [1:0] rising,
+);
 
    logic [10:0]	   hcount;
    logic [9:0]     vcount;
@@ -64,6 +70,20 @@ memory m1(clk, a1, din1, we1, dout1),
        m2(clk, a2, din2, we2, dout2);
 
 always_comb begin
+	
+	din_input= sample;
+	a_input = a_input + 1'd1;
+  if (valid)begin
+  	first = 1'b1; 
+	end
+  if (a_input > 10'd1023;)begin
+	first = 1'b0; 
+	full = 1'b1; 
+	a_input = 10'd0;
+
+	end
+  
+  
   if (first) begin
     a1 = a_display;
     a2 = a_input;
@@ -79,6 +99,7 @@ always_comb begin
     we1 = we_input;
     we2 =  1'b0;
   end
+
   end
 
 
@@ -115,12 +136,14 @@ vga_counters counters(.clk50(clk), .*);
 	first <=0;
 	
      end else if (chipselect && write) begin
+	/*
 	first <=1;
 	a_input<= a_input + 1'd1;
 	if(a_input == 10'd200)begin
 	a_input<= 1'd0;
         first<=0;
-        end
+        end*/
+	
        case (address)
 
 
@@ -131,14 +154,15 @@ vga_counters counters(.clk50(clk), .*);
 	 3'h2 : background_b <= writedata;
          3'h3 : posX <= writedata;
          3'h4 : posY <= writedata;
-	 */
+	 
 
 		
 	 3'h0 : din_input<= writedata[10:0];
 		
-	 3'h1 : posY <= writedata[10:0];	
+	 3'h1 : posY <= writedata[10:0];	*/
 	
-
+	 3'h0 : posX <= writedata;
+         3'h1 : posY <= writedata;
 
        endcase
 	end
@@ -150,9 +174,10 @@ vga_counters counters(.clk50(clk), .*);
       {VGA_R, VGA_G, VGA_B} = {8'h0, 8'h0, 8'h0};
       if (VGA_BLANK_n )begin
 	//if( (hcount[10:0]< posX+30) && (hcount[10:0] > posX-30) && (vcount[9:0]>posY-15) && (vcount[9:0] < posY + 15) )
-	//if (((hcount[10:0] - posX)*(hcount[10:0]- posX)) + (4*(vcount[9:0]- posY)*(vcount[9:0]- posY)) < 900)
+	if (((hcount[10:1] - posX)*(hcount[10:1]- posX)) + (4*(vcount[9:0]- posY)*(vcount[9:0]- posY)) < 90)
+		{VGA_R, VGA_G, VGA_B} = {8'hff, 8'hff, 8'hff};
 	//if ( (vcount[9:0] == posY) &&( (hcount[10:0]< posX+30) && (hcount[10:0] > posX-30) ) )
-	if (dout_display[9:0] == vcount[9:0])
+	else if (dout_display[9:0] == vcount[9:0])
 		{VGA_R, VGA_G, VGA_B} = {8'h00, 8'h00, 8'hff};
 
 	else if(vcount[9:0] == 150 )
