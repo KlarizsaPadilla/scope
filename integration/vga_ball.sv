@@ -20,7 +20,7 @@ module vga_ball(input logic        clk,
 		input  logic [1:0] valid,
 		output logic [1:0] full,
 		output logic [11:0] trig,
-		output logic [1:0] rising,
+		output logic [1:0] rising
 );
 
    logic [10:0]	   hcount;
@@ -76,7 +76,7 @@ always_comb begin
   if (valid)begin
   	first = 1'b1; 
 	end
-  if (a_input > 10'd1023;)begin
+  if (a_input > 10'd1023)begin
 	first = 1'b0; 
 	full = 1'b1; 
 	a_input = 10'd0;
