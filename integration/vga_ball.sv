@@ -17,10 +17,10 @@ module vga_ball(input logic        clk,
 		                   VGA_BLANK_n,
 		output logic 	   VGA_SYNC_n,
 		input   logic [8:0] sample,
-		input  logic [1:0] valid,
-		output logic [1:0] full,
+		input  logic 	    valid, //ish took out the [1:0], only need 1 bit for this
+		output logic 	    full, //ish took out the [1:0], only need 1 bit for this
 		output logic [11:0] trig,
-		output logic [1:0] rising
+		output logic 	    rising //ish took out the [1:0], only need 1 bit for this
 );
 
    logic [10:0]	   hcount;
@@ -58,7 +58,7 @@ module vga_ball(input logic        clk,
 // buffer 2 
    //memory m2( .* );
 
-logic first;
+//logic first; //Ish commented out all the first vairblaes to avoid errors
 
 logic [9:0] a_display;
 logic [9:0] a_input;
@@ -69,46 +69,49 @@ logic[1:0] we_input;
 memory m1(clk, a1, din1, we1, dout1),
        m2(clk, a2, din2, we2, dout2);
 
-always_comb begin
-	
-	din_input= sample;
-	a_input = a_input + 1'd1;
-  if (valid)begin
-  	first = 1'b1; 
-	end
-  if (a_input > 10'd1023)begin
-	first = 1'b0; 
-	full = 1'b1; 
-	a_input = 10'd0;
-
-	end
-  
-  
-  if (first) begin
-    a1 = a_display;
-    a2 = a_input;
-    din2 = din_input;
-    dout_display = dout1;
-    we1 = 1'b0;
-    we2 = we_input;
-  end else begin
-    a1 = a_input;
-    a2 = a_display;
-    din2 =  dout1;
-    dout_display =din_input;
-    we1 = we_input;
-    we2 =  1'b0;
-  end
-
-  end
-
-
 /*
+//always_comb begin //this was giving errors. Ish changed to always_ff, also changed to blocking assign
+always_ff @ (posedge clk) begin	
+	din_input<= sample;
+	a_input <= a_input + 1'd1;
+  if (valid)begin
+  	first <= 1'b1; 
+	end
+  
+if (a_input > 10'd1023)begin
+	first <= 1'b0; 
+	full <= 1'b1; 
+	a_input <= 10'd0;
+
+	end
+  
+//Ish commneted this out, getting errors since we cant assign and call in the same block, i think
+ 
+  if (first) begin
+    a1 <= a_display;
+    a2 <= a_input;
+    din2 <= din_input;
+    dout_display <= dout1;
+    we1 <= 1'b0;
+    we2 <= we_input;
+  end else begin
+    a1 <= a_input;
+    a2 <= a_display;
+    din2 <=  dout1;
+    dout_display <=din_input;
+    we1 <= we_input;
+    we2 <=  1'b0;
+  end
+
+
+  end
+
 assign a1 = first ? a_display : 12'b0;
 assign din1 = first ? 16'b0 : 16'b0;
 assign we1 = first ? 1'b0 : we_input;
 
-assign dout_display = first ? dout1 : dout2;*/
+assign dout_display = first ? dout1 : dout2;
+*/
 
 vga_counters counters(.clk50(clk), .*);
 
@@ -133,7 +136,7 @@ vga_counters counters(.clk50(clk), .*);
 
 	we_input<=0;
 	//posX <= dout_display;
-	first <=0;
+	//first <=0;
 	
      end else if (chipselect && write) begin
 	/*
